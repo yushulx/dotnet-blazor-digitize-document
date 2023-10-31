@@ -1,0 +1,122 @@
+﻿@page "/"
+@using Twain.Wia.Sane.Scanner
+
+<h1>Digitizing Documents in Blazor</h1>
+
+<div id="loading-indicator" class="loading-indicator" style="@(isLoading ? "display: flex;" : "display: none;")">
+    <div class="spinner"></div>
+</div>
+
+<div class="connection">
+    <div class="row">
+        <div>
+            <label>Enter host address: </label>
+            <input type="text" id="host" placeholder="@host" @bind="host">
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Web TWAIN -->
+<div class="container" id="dwt">
+    <div class="row">
+        <div>
+            <button @onclick="GetDevices">Get Devices</button>
+            <select id="sources" @bind="selectedValue">
+                @foreach (var device in devices)
+                {
+                    <option value="@device["name"].ToString()">@device["name"].ToString()</option>
+                }
+            </select>
+            <button @onclick="AcquireImage">Scan Documents</button>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="full-img">
+            <img id="scanner-image" src="@imageDataUrl">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="thumb-bar" id="thumb-bar">
+            <div class="thumb-box" id="thumb-box">
+                @foreach (var url in imageUrls)
+                {
+                    <img src="@url" @onclick="() => OnImageClick(url)" />
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isLoading = false;
+
+    private ScannerController scannerController = new ScannerController();
+    private string host = "http://192.168.8.72:18622";
+    private List<Dictionary<string, object>> devices = new List<Dictionary<string, object>>();
+    private string licenseKey = "LICENSE-KEY";
+
+    private string jobId = "";
+    private string imageDataUrl { get; set; } = string.Empty;
+    private string selectedValue { get; set; } = string.Empty;
+
+    private List<string> imageUrls { get; set; } = new List<string>();
+
+    public async Task GetDevices()
+    {
+        isLoading = true;
+
+        devices = await scannerController.GetDevices(host);
+        if (devices.Count >= 0)
+        {
+            selectedValue = devices[0]["name"].ToString();
+        }
+
+
+        isLoading = false;
+        // StateHasChanged();
+    }
+
+    public async Task AcquireImage()
+    {
+        if (devices.Count == 0)
+        {
+            return;
+        }
+
+        int selectedIndex = devices.FindIndex(device => device["name"].ToString() == selectedValue);
+        if (selectedIndex < 0) return;
+        var parameters = new Dictionary<string, object>
+                {
+                    {"license", licenseKey},
+                    {"device", devices[selectedIndex]["device"]}
+                };
+
+        parameters["config"] = new Dictionary<string, object>
+                {
+                    {"IfShowUI", false},
+                    {"PixelType", 2},
+                    {"Resolution", 200},
+                    {"IfFeederEnabled", false},
+                    {"IfDuplexEnabled", false}
+                };
+        jobId = await scannerController.ScanDocument(host, parameters);
+        byte[] bytes = await scannerController.GetImageStream(host, jobId);
+        imageDataUrl = $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+        AddImageUrl(imageDataUrl);
+    }
+
+    private void AddImageUrl(string url)
+    {
+        imageUrls.Add(url);
+    }
+
+    private void OnImageClick(string url)
+    {
+        imageDataUrl = url;
+    }
+
+    
+}   
