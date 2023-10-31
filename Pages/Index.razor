@@ -63,7 +63,7 @@
     private bool isLoading = false;
 
     private ScannerController scannerController = new ScannerController();
-    private string host = "http://192.168.8.72:18622";
+    private string host = "https://demo.scannerproxy.com/ddm/18626"; // http://192.168.8.72:18622
     private List<Dictionary<string, object>> devices = new List<Dictionary<string, object>>();
     private string licenseKey = "LICENSE-KEY";
 
@@ -77,12 +77,18 @@
     {
         isLoading = true;
 
-        devices = await scannerController.GetDevices(host);
-        if (devices.Count >= 0)
+        try
         {
-            selectedValue = devices[0]["name"].ToString();
+            devices = await scannerController.GetDevices(host);
+            if (devices.Count >= 0)
+            {
+                selectedValue = devices[0]["name"].ToString();
+            }
         }
-
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
 
         isLoading = false;
         // StateHasChanged();
