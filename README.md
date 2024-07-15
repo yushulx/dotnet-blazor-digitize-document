@@ -35,3 +35,6 @@ This example demonstrates how to utilize [Twain.Wia.Sane.Scanner](https://www.nu
 3. Click the **Get Devices** button to retrieve the scanner list. Then select a scanner and click the **Scan Documents** button to acquire document images.
     
     ![blazor-digitize-document](https://www.dynamsoft.com/codepool/img/2023/11/blazor-web-scanner-digitize-document.png)
+
+## Blog
+[Blazor WebAssembly: Building Web Apps for Digitizing Documents with C# and .NET](https://www.dynamsoft.com/codepool/dotnet-blazor-webassembly-digitize-document.html)
